@@ -3,12 +3,14 @@ package de.alex.goldenstom.start;
 import de.alex.goldenstom.game.commands.AboutServerCommand;
 import de.alex.goldenstom.game.commands.ServerInfoCommand;
 import de.alex.goldenstom.game.commands.ExtensionManager;
+import de.alex.goldenstom.game.commands.StopServerCommand;
 import de.alex.goldenstom.game.events.PlayerEvents;
 import eu.cloudnetservice.driver.CloudNetDriver;
 import eu.cloudnetservice.driver.network.HostAndPort;
 import eu.cloudnetservice.driver.service.ServiceInfoSnapshot;
 import it.unimi.dsi.fastutil.io.FastBufferedInputStream;
 import net.minestom.server.MinecraftServer;
+import net.minestom.server.extras.optifine.OptifineSupport;
 import net.minestom.server.extras.velocity.VelocityProxy;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -48,7 +50,6 @@ public class GoldenStom {
 
     public static void main(String[] args) {
         long ms = System.currentTimeMillis();
-
         //Config
         try {
             loadConfig();
@@ -57,26 +58,30 @@ public class GoldenStom {
             return;
         }
 
+
         //CloudNet
-        if (!enableCloudNet()) {
-            LOGGER.error("No CloudNet found!");
-            return;
+        if(enableCloudNet()) {
+            LOGGER.info("Enabling Cloudnet Support. Overriding IP/Port of server.");
         }
 
         //Velocity
         String velocitySecret = System.getProperty(SERVER_SECRET);
-        if (velocitySecret == null) {
-            LOGGER.error("No Velocity Secret found!");
-            return;
-        } else VelocityProxy.enable(velocitySecret);
+        if (velocitySecret != null) {
+            LOGGER.info("Enabling Velocity support.");
+            VelocityProxy.enable(velocitySecret);
+        }
+
 
         //Init Server and Register CMDs etc
         minecraftServer = MinecraftServer.init();
 
+        //Lobby Innit
         enableGoldenStomExtensions();
+
         new ExtensionManager("extensionmanager", "exm", "ex");
         new ServerInfoCommand("serverinfo");
         new AboutServerCommand("about","version");
+        new StopServerCommand("stop","end");
 
         LOGGER.info("Started Internals in {}ms", System.currentTimeMillis() - ms);
 
