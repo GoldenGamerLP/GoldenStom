@@ -26,6 +26,7 @@ dependencies {
     implementation 'net.kyori:adventure-text-minimessage:4.11.0'
     implementation platform('eu.cloudnetservice.cloudnet:bom:4.0.0-SNAPSHOT')
     compileOnly 'eu.cloudnetservice.cloudnet:driver'
+    compileOnly 'org.redisson:redisson:3.17.6'
 }
 
 java {

@@ -13,6 +13,7 @@ import net.minestom.server.extensions.Extension;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -30,7 +31,9 @@ public class ExtensionManager extends Command {
     public ExtensionManager(@NotNull String name, @Nullable String... aliases) {
         super(name, aliases);
 
+        //extensions list
         var list = ArgumentType.Literal("list");
+
 
         addSyntax((sender, context) -> {
             TextComponent.Builder text = Component.text();
