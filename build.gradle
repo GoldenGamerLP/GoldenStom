@@ -25,7 +25,7 @@ dependencies {
     implementation 'com.github.Minestom.Minestom:Minestom:aebf72de90'
     //implementation 'com.github.Minestom:Minestom:8ce43ca40c'
     implementation 'net.kyori:adventure-text-minimessage:4.12.0'
-    implementation platform('eu.cloudnetservice.cloudnet:bom:4.0.0-RC1')
+    implementation ('eu.cloudnetservice.cloudnet:wrapper-jvm:4.0.0-RC7')
     implementation 'scaffolding:core:unspecified'
     compileOnly 'eu.cloudnetservice.cloudnet:driver'
 }

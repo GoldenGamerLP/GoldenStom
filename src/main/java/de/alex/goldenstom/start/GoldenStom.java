@@ -5,9 +5,10 @@ import de.alex.goldenstom.game.commands.ExtensionManager;
 import de.alex.goldenstom.game.commands.ServerInfoCommand;
 import de.alex.goldenstom.game.commands.StopServerCommand;
 import de.alex.goldenstom.game.events.PlayerEvents;
-import eu.cloudnetservice.driver.CloudNetDriver;
+import eu.cloudnetservice.driver.CloudNetVersion;
+import eu.cloudnetservice.driver.inject.InjectionLayer;
 import eu.cloudnetservice.driver.network.HostAndPort;
-import eu.cloudnetservice.driver.service.ServiceInfoSnapshot;
+import eu.cloudnetservice.wrapper.configuration.WrapperConfiguration;
 import it.unimi.dsi.fastutil.io.FastBufferedInputStream;
 import net.kyori.adventure.text.Component;
 import net.minestom.server.MinecraftServer;
@@ -112,19 +113,19 @@ public class GoldenStom {
 
     private static boolean enableCloudNet() {
         try {
-            Class.forName(CloudNetDriver.class.getName());
-        } catch (Exception | Error e) {
-            LOGGER.info("Class {} for CloudNet was not found.", "CloudNet");
-            return false;
-        }
-        ServiceInfoSnapshot snapshot = CloudNetDriver.instance().cloudServiceProvider().serviceByName(CloudNetDriver.instance().componentName());
-
-        if (snapshot == null) {
+            Class.forName(CloudNetVersion.class.getName());
+        } catch (ClassNotFoundException e) {
             return false;
         }
 
+        var wrapper = InjectionLayer.ext().instance(WrapperConfiguration.class);
 
-        HostAndPort hostAndPort = snapshot.address();
+        if (wrapper == null) {
+            return false;
+        }
+
+
+        HostAndPort hostAndPort = wrapper.targetListener();
         System.setProperty(SERVER_PORT, String.valueOf(hostAndPort.port()));
         System.setProperty(SERVER_ADDRESS, hostAndPort.host());
         System.setProperty("server.cloudnet", "true");
