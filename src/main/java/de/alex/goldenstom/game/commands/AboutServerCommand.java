@@ -29,7 +29,7 @@ public class AboutServerCommand extends Command {
         TagResolver tagResolver = TagResolver.resolver(
                 Placeholder.parsed("version", MinecraftServer.PROTOCOL_VERSION + "")
         );
-        return miniMes.deserialize(aboutMessage,tagResolver);
+        return miniMes.deserialize(aboutMessage, tagResolver);
     }
 
 

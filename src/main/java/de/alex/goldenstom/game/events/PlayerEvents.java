@@ -18,9 +18,9 @@ public class PlayerEvents {
     );
 
     private static final Integer resetHeight = Integer.getInteger("server.reset.height", 0);
+    private final EventNode<PlayerEvent> eventNode = EventNode.type("goldenstom-player-events", EventFilter.PLAYER);
 
     public PlayerEvents() {
-        EventNode<PlayerEvent> eventNode = EventNode.type("goldenstom-player-events", EventFilter.PLAYER);
         MinecraftServer.getGlobalEventHandler().addChild(eventNode);
 
         eventNode.addListener(PlayerLoginEvent.class, event -> {
@@ -29,7 +29,7 @@ public class PlayerEvents {
         });
 
         eventNode.addListener(PlayerSpawnEvent.class, playerSpawnEvent -> {
-            playerSpawnEvent.getPlayer().teleport(position).thenRun(() -> {
+            playerSpawnEvent.getPlayer().teleport(position).thenRunAsync(() -> {
                 playerSpawnEvent.getPlayer().sendMessage("Willkommen auf GoldenMelon!");
             });
         });

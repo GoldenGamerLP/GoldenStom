@@ -1,18 +1,20 @@
 package de.alex.goldenstom.start;
 
 import de.alex.goldenstom.game.commands.AboutServerCommand;
-import de.alex.goldenstom.game.commands.ServerInfoCommand;
 import de.alex.goldenstom.game.commands.ExtensionManager;
+import de.alex.goldenstom.game.commands.ServerInfoCommand;
 import de.alex.goldenstom.game.commands.StopServerCommand;
 import de.alex.goldenstom.game.events.PlayerEvents;
 import eu.cloudnetservice.driver.CloudNetDriver;
 import eu.cloudnetservice.driver.network.HostAndPort;
 import eu.cloudnetservice.driver.service.ServiceInfoSnapshot;
 import it.unimi.dsi.fastutil.io.FastBufferedInputStream;
+import net.kyori.adventure.text.Component;
 import net.minestom.server.MinecraftServer;
-import net.minestom.server.extras.optifine.OptifineSupport;
+import net.minestom.server.extras.MojangAuth;
 import net.minestom.server.extras.velocity.VelocityProxy;
-import org.jetbrains.annotations.Nullable;
+import net.minestom.server.monitoring.BenchmarkManager;
+import net.minestom.server.network.packet.server.play.PlayerListHeaderAndFooterPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +23,7 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Properties;
 
@@ -39,7 +42,6 @@ server.spawn.z
 server.world
  */
 public class GoldenStom {
-
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GoldenStom.class);
     private static final String SERVER_ADDRESS = "server.ip";
@@ -60,7 +62,7 @@ public class GoldenStom {
 
 
         //CloudNet
-        if(enableCloudNet()) {
+        if (enableCloudNet()) {
             LOGGER.info("Enabling Cloudnet Support. Overriding IP/Port of server.");
         }
 
@@ -72,23 +74,36 @@ public class GoldenStom {
         }
 
 
+        System.setProperty("minestom.inside-test", "true");
         //Init Server and Register CMDs etc
         minecraftServer = MinecraftServer.init();
+
+        MojangAuth.init();
 
         //Lobby Innit
         enableGoldenStomExtensions();
 
         new ExtensionManager("extensionmanager", "exm", "ex");
         new ServerInfoCommand("serverinfo");
-        new AboutServerCommand("about","version");
-        new StopServerCommand("stop","end");
+        new AboutServerCommand("about", "version");
+        new StopServerCommand("stop", "end");
+
 
         LOGGER.info("Started Internals in {}ms", System.currentTimeMillis() - ms);
-
         minecraftServer.start(
                 System.getProperty(SERVER_ADDRESS, "0.0.0.0"),
                 Integer.getInteger(SERVER_PORT, 25565)
         );
+
+        BenchmarkManager mng = new BenchmarkManager();
+        mng.enable(Duration.ofMillis(250));
+
+        MinecraftServer.getSchedulerManager().buildTask(() -> {
+            PlayerListHeaderAndFooterPacket hd = new PlayerListHeaderAndFooterPacket(mng.getCpuMonitoringMessage(), Component.text(MinecraftServer.getInstanceManager().getInstances().size()));
+            MinecraftServer.getConnectionManager().getOnlinePlayers().forEach(player -> {
+                player.sendPacket(hd);
+            });
+        }).repeat(Duration.ofMillis(250)).schedule();
     }
 
     private static void enableGoldenStomExtensions() {
@@ -98,27 +113,21 @@ public class GoldenStom {
     private static boolean enableCloudNet() {
         try {
             Class.forName(CloudNetDriver.class.getName());
-        } catch (ClassNotFoundException e) {
+        } catch (Exception | Error e) {
+            LOGGER.info("Class {} for CloudNet was not found.", "CloudNet");
             return false;
         }
+        ServiceInfoSnapshot snapshot = CloudNetDriver.instance().cloudServiceProvider().serviceByName(CloudNetDriver.instance().componentName());
 
-        CloudNetDriver cloudNet = CloudNetDriver.instance();
-
-        if (cloudNet == null) {
-            return false;
-        }
-
-        String thisServiceName = cloudNet.componentName();
-        @Nullable ServiceInfoSnapshot service = cloudNet.cloudServiceProvider().serviceByName(thisServiceName);
-
-        if (service == null) {
+        if (snapshot == null) {
             return false;
         }
 
 
-        HostAndPort hostAndPort = service.address();
+        HostAndPort hostAndPort = snapshot.address();
         System.setProperty(SERVER_PORT, String.valueOf(hostAndPort.port()));
         System.setProperty(SERVER_ADDRESS, hostAndPort.host());
+        System.setProperty("server.cloudnet", "true");
         LOGGER.info("Opening via CloudNet on Address: {}:{}", hostAndPort.host(), hostAndPort.port());
         return true;
     }

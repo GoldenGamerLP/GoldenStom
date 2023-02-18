@@ -17,7 +17,7 @@ public class StopServerCommand extends Command {
 
         setCondition((sender, commandString) ->
                 sender instanceof ConsoleSender ||
-                sender.hasPermission("server.stop")
+                        sender.hasPermission("server.stop")
         );
 
         setDefaultExecutor((sender, context) -> {
@@ -28,5 +28,6 @@ public class StopServerCommand extends Command {
                     .forEach(player -> player.kick(kickmsg));
             MinecraftServer.stopCleanly();
         });
+        MinecraftServer.getCommandManager().register(this);
     }
 }
